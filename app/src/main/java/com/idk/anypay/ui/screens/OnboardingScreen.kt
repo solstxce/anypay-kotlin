@@ -30,6 +30,7 @@ fun OnboardingScreen(
     var upiPin by remember { mutableStateOf("") }
     var confirmPin by remember { mutableStateOf("") }
     var selectedBankIndex by remember { mutableIntStateOf(-1) }
+    var bankName by remember { mutableStateOf("") }
     var bankIfsc by remember { mutableStateOf("") }
     var cardLastSix by remember { mutableStateOf("") }
     var cardExpiryMonth by remember { mutableStateOf("") }
@@ -43,7 +44,7 @@ fun OnboardingScreen(
     // Validation
     val isMobileValid = mobileNumber.length == 10 && mobileNumber.firstOrNull()?.let { it in '6'..'9' } == true
     val isPinValid = upiPin.length in 4..6 && upiPin == confirmPin
-    val isBankValid = selectedBankIndex >= 0 && bankIfsc.length == 11
+    val isBankValid = bankName.isNotBlank()
     val isCardValid = cardLastSix.length == 6 && cardExpiryMonth.length == 2 && cardExpiryYear.length == 2
     
     val canProceed = when (currentStep) {
@@ -109,19 +110,21 @@ fun OnboardingScreen(
                 )
                 2 -> BankSelectionStep(
                     selectedBankIndex = selectedBankIndex,
+                    bankName = bankName,
                     bankIfsc = bankIfsc,
                     expanded = bankDropdownExpanded,
                     onExpandedChange = { bankDropdownExpanded = it },
                     onBankSelect = { index ->
                         selectedBankIndex = index
                         if (index >= 0) {
+                            bankName = SUPPORTED_BANKS[index].name
                             bankIfsc = SUPPORTED_BANKS[index].ifscPrefix + "0000000"
                         }
                         bankDropdownExpanded = false
                     },
+                    onBankNameChange = { bankName = it },
                     onIfscChange = { if (it.length <= 11) bankIfsc = it.uppercase() },
-                    isBankValid = selectedBankIndex >= 0,
-                    isIfscValid = bankIfsc.length == 11
+                    isBankValid = bankName.isNotBlank()
                 )
                 3 -> CardDetailsStep(
                     cardLastSix = cardLastSix,
@@ -163,7 +166,7 @@ fun OnboardingScreen(
                                 UserCredentials(
                                     mobileNumber = mobileNumber,
                                     upiPin = upiPin,
-                                    bankName = if (selectedBankIndex >= 0) SUPPORTED_BANKS[selectedBankIndex].name else "",
+                                    bankName = bankName,
                                     bankIfsc = bankIfsc,
                                     cardLastSixDigits = cardLastSix,
                                     cardExpiryMonth = cardExpiryMonth,
@@ -315,24 +318,25 @@ private fun PinSetupStep(
 @Composable
 private fun BankSelectionStep(
     selectedBankIndex: Int,
+    bankName: String,
     bankIfsc: String,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onBankSelect: (Int) -> Unit,
+    onBankNameChange: (String) -> Unit,
     onIfscChange: (String) -> Unit,
-    isBankValid: Boolean,
-    isIfscValid: Boolean
+    isBankValid: Boolean
 ) {
     Column {
         Text(
-            text = "Select Your Bank",
+            text = "Enter Your Bank Details",
             style = MaterialTheme.typography.headlineSmall
         )
         
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Choose the bank account you want to link for UPI payments.",
+            text = "Enter your bank name or select from the list.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -344,12 +348,16 @@ private fun BankSelectionStep(
             onExpandedChange = onExpandedChange
         ) {
             OutlinedTextField(
-                value = if (selectedBankIndex >= 0) SUPPORTED_BANKS[selectedBankIndex].name else "",
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Bank") },
+                value = bankName,
+                onValueChange = onBankNameChange,
+                label = { Text("Bank Name") },
+                placeholder = { Text("State Bank of India") },
                 leadingIcon = { Icon(Icons.Default.AccountBalance, contentDescription = null) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                isError = bankName.isEmpty() && !isBankValid,
+                supportingText = {
+                    Text("You can type your bank name or select from the list")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor()
@@ -373,16 +381,16 @@ private fun BankSelectionStep(
         OutlinedTextField(
             value = bankIfsc,
             onValueChange = onIfscChange,
-            label = { Text("IFSC Code") },
+            label = { Text("IFSC Code (Optional)") },
             placeholder = { Text("SBIN0001234") },
             leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
             singleLine = true,
-            isError = bankIfsc.isNotEmpty() && !isIfscValid,
+            isError = bankIfsc.isNotEmpty() && bankIfsc.length != 11,
             supportingText = {
-                if (bankIfsc.isNotEmpty() && !isIfscValid) {
-                    Text("IFSC code must be 11 characters")
+                if (bankIfsc.isNotEmpty() && bankIfsc.length != 11) {
+                    Text("IFSC code must be 11 characters if provided")
                 } else {
-                    Text("You can find this on your cheque book or bank statement")
+                    Text("Optional: You can find this on your cheque book or bank statement")
                 }
             },
             modifier = Modifier.fillMaxWidth()
