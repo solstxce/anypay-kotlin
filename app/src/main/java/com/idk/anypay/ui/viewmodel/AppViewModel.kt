@@ -66,8 +66,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _hasCameraPermission = MutableStateFlow(false)
     val hasCameraPermission: StateFlow<Boolean> = _hasCameraPermission.asStateFlow()
     
-    val isAccessibilityServiceEnabled: Boolean
-        get() = upiService.isAccessibilityServiceEnabled()
+    private val _isAccessibilityServiceEnabled = MutableStateFlow(false)
+    val isAccessibilityServiceEnabled: StateFlow<Boolean> = _isAccessibilityServiceEnabled.asStateFlow()
     
     // ==================== Analytics ====================
     
@@ -222,6 +222,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _hasCameraPermission.value = ContextCompat.checkSelfPermission(
             context, Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
+        
+        _isAccessibilityServiceEnabled.value = upiService.isAccessibilityServiceEnabled()
     }
     
     fun updatePhonePermission(granted: Boolean) {
@@ -234,17 +236,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     
     fun openAccessibilitySettings() {
         upiService.openAccessibilitySettings()
-    }
-    
-    fun dialUssd(ussdCode: String) {
-        try {
-            val encodedCode = Uri.encode(ussdCode)
-            val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$encodedCode"))
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            // Handle error
-        }
     }
     
     // ==================== Clear Data ====================

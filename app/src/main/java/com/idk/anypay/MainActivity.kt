@@ -88,6 +88,7 @@ private fun AppContent(
     val lastUssdMessage by viewModel.lastUssdMessage.collectAsStateWithLifecycle()
     val hasPhonePermission by viewModel.hasPhonePermission.collectAsStateWithLifecycle()
     val hasCameraPermission by viewModel.hasCameraPermission.collectAsStateWithLifecycle()
+    val isAccessibilityEnabled by viewModel.isAccessibilityServiceEnabled.collectAsStateWithLifecycle()
     val totalSpent by viewModel.totalSpent.collectAsStateWithLifecycle()
     val averageTransaction by viewModel.averageTransaction.collectAsStateWithLifecycle()
     val categoryStats by viewModel.categoryStats.collectAsStateWithLifecycle()
@@ -124,7 +125,7 @@ private fun AppContent(
                 lastBalance = viewModel.getLastBalance(),
                 hasPhonePermission = hasPhonePermission,
                 hasCameraPermission = hasCameraPermission,
-                isAccessibilityEnabled = viewModel.isAccessibilityServiceEnabled,
+                isAccessibilityEnabled = isAccessibilityEnabled,
                 totalSpent = totalSpent,
                 averageTransaction = averageTransaction,
                 categoryStats = categoryStats,
@@ -150,9 +151,6 @@ private fun AppContent(
                 onRequestCameraPermission = onRequestCameraPermission,
                 onOpenAccessibilitySettings = {
                     viewModel.openAccessibilitySettings()
-                },
-                onDialUssd = { code ->
-                    viewModel.dialUssd(code)
                 }
             )
         }

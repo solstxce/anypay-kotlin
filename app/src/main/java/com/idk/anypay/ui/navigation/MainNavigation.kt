@@ -54,8 +54,7 @@ fun MainNavigation(
     onClearData: () -> Unit,
     onRequestPhonePermissions: () -> Unit,
     onRequestCameraPermission: () -> Unit,
-    onOpenAccessibilitySettings: () -> Unit,
-    onDialUssd: (String) -> Unit
+    onOpenAccessibilitySettings: () -> Unit
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -173,8 +172,6 @@ fun MainNavigation(
                     lastUssdMessage = lastUssdMessage,
                     onSendMoney = { recipient, amount, remarks ->
                         if (hasPhonePermission && isAccessibilityEnabled) {
-                            // Dial *99# first, then the service will handle the rest
-                            onDialUssd("*99#")
                             onSendMoney(recipient, amount, remarks)
                         } else if (!hasPhonePermission) {
                             onRequestPhonePermissions()
@@ -202,7 +199,6 @@ fun MainNavigation(
                     lastBalance = lastBalance,
                     onCheckBalance = {
                         if (hasPhonePermission && isAccessibilityEnabled) {
-                            onDialUssd("*99#")
                             onCheckBalance()
                         }
                     },

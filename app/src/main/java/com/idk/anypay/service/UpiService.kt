@@ -2,9 +2,12 @@ package com.idk.anypay.service
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
+import android.telephony.TelephonyManager
 import android.text.TextUtils
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.idk.anypay.data.model.Transaction
 import com.idk.anypay.data.model.TransactionStatus
 import com.idk.anypay.data.model.TransactionType
@@ -17,6 +20,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * High-level UPI service that wraps USSD accessibility service operations.
  */
 class UpiService(private val context: Context) {
+    
+    private val telephonyManager: TelephonyManager by lazy {
+        context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+    }
     
     companion object {
         private const val TAG = "AnyPay-UpiService"
@@ -68,7 +75,19 @@ class UpiService(private val context: Context) {
      * Check if accessibility service is enabled
      */
     fun isAccessibilityServiceEnabled(): Boolean {
-        return UssdAccessibilityService.isServiceRunning()
+        // Check if service instance exists
+        if (UssdAccessibilityService.isServiceRunning()) {
+            return true
+        }
+        
+        // Double-check via system settings
+        val settingValue = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )
+        
+        val serviceName = "${context.packageName}/${UssdAccessibilityService::class.java.name}"
+        return settingValue?.contains(serviceName) == true
     }
     
     /**
@@ -102,6 +121,9 @@ class UpiService(private val context: Context) {
             cardDetails = credentials.formattedCardDetails,
             upiPin = credentials.upiPin
         )
+        
+        // Automatically dial *99# to start USSD session
+        dialUssdCode("*99#")
         
         return transaction
     }
@@ -137,6 +159,9 @@ class UpiService(private val context: Context) {
             amount = amount.toLong().toString(), // USSD expects integer amounts
             remarks = remarks
         )
+        
+        // Automatically dial *99# to start USSD session
+        dialUssdCode("*99#")
         
         return transaction
     }
@@ -213,6 +238,74 @@ class UpiService(private val context: Context) {
         }
         
         return ""
+    }
+    
+    /**
+     * Send a USSD code without launching the dialer app (API 26+)
+     */
+    private fun dialUssdCode(ussdCode: String) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Use modern API that doesn't launch dialer
+                sendUssdRequest(ussdCode)
+            } else {
+                // Fallback for older Android versions
+                val encodedCode = android.net.Uri.encode(ussdCode)
+                val intent = android.content.Intent(android.content.Intent.ACTION_CALL, android.net.Uri.parse("tel:$encodedCode"))
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+            Log.d(TAG, "Sending USSD code: $ussdCode")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send USSD code: $ussdCode", e)
+            _operationState.value = OperationState.Error("Failed to initiate USSD session: ${e.message}")
+        }
+    }
+    
+    /**
+     * Send USSD request using TelephonyManager (API 26+)
+     * This doesn't launch the dialer app
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun sendUssdRequest(ussdCode: String) {
+        try {
+            val callback = object : TelephonyManager.UssdResponseCallback() {
+                override fun onReceiveUssdResponse(
+                    telephonyManager: TelephonyManager?,
+                    request: String?,
+                    response: CharSequence?
+                ) {
+                    Log.d(TAG, "USSD Response received: $response")
+                    // The accessibility service will handle the actual response
+                    // This callback is just for logging
+                }
+                
+                override fun onReceiveUssdResponseFailed(
+                    telephonyManager: TelephonyManager?,
+                    request: String?,
+                    failureCode: Int
+                ) {
+                    Log.e(TAG, "USSD Request failed with code: $failureCode")
+                    when (failureCode) {
+                        TelephonyManager.USSD_RETURN_FAILURE -> {
+                            _operationState.value = OperationState.Error("USSD request failed")
+                        }
+                        TelephonyManager.USSD_ERROR_SERVICE_UNAVAIL -> {
+                            _operationState.value = OperationState.Error("USSD service unavailable")
+                        }
+                    }
+                }
+            }
+            
+            telephonyManager.sendUssdRequest(ussdCode, callback, null)
+            Log.d(TAG, "USSD request sent via TelephonyManager: $ussdCode")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied for USSD request", e)
+            _operationState.value = OperationState.Error("Phone permission required for USSD")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending USSD request", e)
+            _operationState.value = OperationState.Error("Failed to send USSD: ${e.message}")
+        }
     }
     
     /**
