@@ -62,10 +62,14 @@ class UpiService(private val context: Context) {
         UssdAccessibilityService.onUssdResponse = { message ->
             Log.d(TAG, "USSD Response: ${message.take(100)}...")
             _lastUssdMessage.value = message
-            _operationState.value = OperationState.InProgress(message)
             
-            // Update overlay with current message
-            UssdOverlayService.updateMessage(message.take(150))
+            // Only update state to InProgress if we're not already in a terminal state
+            val currentState = _operationState.value
+            if (currentState !is OperationState.Success && currentState !is OperationState.Error) {
+                _operationState.value = OperationState.InProgress(message)
+                // Update overlay with current message
+                UssdOverlayService.updateMessage(message.take(150))
+            }
         }
         
         UssdAccessibilityService.onOperationComplete = { success, message ->

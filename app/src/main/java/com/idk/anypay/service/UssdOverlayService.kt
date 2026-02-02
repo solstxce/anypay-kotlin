@@ -139,30 +139,49 @@ fun UssdOverlayContent(messageState: State<String>) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xF5FFFFFF)),
+            .background(Color(0xF0000000)),
         contentAlignment = Alignment.Center
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .fillMaxWidth(0.88f)
+                .padding(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    text = "Processing UPI Transaction",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center
-                )
+                // Icon with colored background
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(72.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 4.dp
+                        )
+                    }
+                }
                 
-                CircularProgressIndicator(
-                    modifier = Modifier.size(56.dp)
+                Text(
+                    text = "Processing Payment",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 Text(
@@ -170,6 +189,13 @@ fun UssdOverlayContent(messageState: State<String>) {
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Text(
+                    text = "Please wait...",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
             }
         }

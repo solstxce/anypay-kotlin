@@ -155,6 +155,9 @@ private fun AppContent(
                 },
                 onRequestOverlayPermission = {
                     viewModel.requestOverlayPermission()
+                },
+                onUpdateTransaction = { transaction ->
+                    viewModel.updateTransactionWithResult(transaction)
                 }
             )
         }

@@ -56,7 +56,8 @@ fun MainNavigation(
     onRequestPhonePermissions: () -> Unit,
     onRequestCameraPermission: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
-    onRequestOverlayPermission: () -> Unit = {}
+    onRequestOverlayPermission: () -> Unit = {},
+    onUpdateTransaction: (Transaction) -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -177,6 +178,9 @@ fun MainNavigation(
                     initialRecipient = pendingRecipient,
                     initialAmount = pendingAmount,
                     initialRemarks = pendingRemarks,
+                    onUpdateTransaction = { transaction ->
+                        onUpdateTransaction(transaction)
+                    },
                     onSendMoney = { recipient, amount, remarks ->
                         if (hasPhonePermission && isAccessibilityEnabled) {
                             onSendMoney(recipient, amount, remarks)

@@ -28,7 +28,8 @@ fun SendMoneyScreen(
     onCancel: () -> Unit,
     onScanQr: () -> Unit,
     onBack: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onUpdateTransaction: ((com.idk.anypay.data.model.Transaction) -> Unit)? = null
 ) {
     var recipient by remember { mutableStateOf(initialRecipient) }
     var amount by remember { mutableStateOf(initialAmount) }
@@ -41,6 +42,9 @@ fun SendMoneyScreen(
         if (initialRemarks.isNotEmpty()) remarks = initialRemarks
     }
     
+    // Track if we've already updated the transaction to prevent re-triggering
+    var hasUpdatedTransaction by remember { mutableStateOf(false) }
+    
     // Validation
     val isRecipientValid = UpiPaymentInfo.isValidRecipient(recipient)
     val amountValue = amount.toDoubleOrNull() ?: 0.0
@@ -50,6 +54,18 @@ fun SendMoneyScreen(
     val isProcessing = operationState is UpiService.OperationState.InProgress
     val isComplete = operationState is UpiService.OperationState.Success || 
                      operationState is UpiService.OperationState.Error
+    
+    // Update transaction when operation completes (only once)
+    LaunchedEffect(isComplete) {
+        if (isComplete && !hasUpdatedTransaction) {
+            if (operationState is UpiService.OperationState.Success) {
+                operationState.transaction?.let { 
+                    onUpdateTransaction?.invoke(it)
+                    hasUpdatedTransaction = true
+                }
+            }
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -335,26 +351,30 @@ fun CompletionScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+        if (!isSuccess) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = ErrorRed.copy(alpha = 0.1f)
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Response",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = message.take(300),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Error Details",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ErrorRed
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = message.take(200),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
         
         Spacer(modifier = Modifier.height(32.dp))

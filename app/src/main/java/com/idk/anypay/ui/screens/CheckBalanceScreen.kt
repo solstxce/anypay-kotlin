@@ -20,11 +20,27 @@ fun CheckBalanceScreen(
     onCheckBalance: () -> Unit,
     onCancel: () -> Unit,
     onBack: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onUpdateTransaction: ((com.idk.anypay.data.model.Transaction) -> Unit)? = null
 ) {
     val isProcessing = operationState is UpiService.OperationState.InProgress
     val isComplete = operationState is UpiService.OperationState.Success || 
                      operationState is UpiService.OperationState.Error
+    
+    // Track if we've already updated the transaction to prevent re-triggering
+    var hasUpdatedTransaction by remember { mutableStateOf(false) }
+    
+    // Update transaction when operation completes (only once)
+    LaunchedEffect(isComplete) {
+        if (isComplete && !hasUpdatedTransaction) {
+            if (operationState is UpiService.OperationState.Success) {
+                operationState.transaction?.let { 
+                    onUpdateTransaction?.invoke(it)
+                    hasUpdatedTransaction = true
+                }
+            }
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -167,12 +183,9 @@ private fun BalanceResultScreen(
     onDone: () -> Unit
 ) {
     val isSuccess = operationState is UpiService.OperationState.Success
-    val message = when (operationState) {
-        is UpiService.OperationState.Success -> operationState.message
-        is UpiService.OperationState.Error -> operationState.message
-        else -> ""
+    val balance = remember(operationState) {
+        (operationState as? UpiService.OperationState.Success)?.transaction?.balance
     }
-    val balance = (operationState as? UpiService.OperationState.Success)?.transaction?.balance
     
     Column(
         modifier = Modifier
@@ -201,49 +214,48 @@ private fun BalanceResultScreen(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        if (isSuccess && balance != null) {
+        if (isSuccess) {
+            if (balance != null) {
+                Text(
+                    text = "Your Balance",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "₹${String.format("%,.2f", balance)}",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = SuccessGreen
+                )
+            } else {
+                Text(
+                    text = "Balance Check Complete",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Please check your SMS for balance details",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
             Text(
-                text = "Your Balance",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "Failed to Check Balance",
+                style = MaterialTheme.typography.headlineSmall
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "₹${String.format("%,.2f", balance)}",
-                style = MaterialTheme.typography.displayMedium,
-                color = SuccessGreen
+                text = "Please try again later",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        } else {
-            Text(
-                text = if (isSuccess) "Balance Retrieved" else "Failed to Check Balance",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "USSD Response",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = message.take(300),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
         }
         
         Spacer(modifier = Modifier.height(32.dp))
