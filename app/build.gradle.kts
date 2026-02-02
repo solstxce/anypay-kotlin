@@ -16,16 +16,47 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        vectorDrawables.useSupportLibrary = true
+        
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+    
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/NOTICE.md",
+                "META-INF/LICENSE.md",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module"
+            )
+        }
+    }
+    lint {
+        disable += setOf(
+            "FrequentlyChangingValue",
+            "NullSafeMutableLiveData",
+            "RememberInComposition",
+            "AutoboxingStateCreation"
+        )
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -36,6 +67,10 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = false
+        aidl = false
+        renderScript = false
+        shaders = false
     }
 }
 
