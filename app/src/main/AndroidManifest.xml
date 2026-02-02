@@ -12,6 +12,9 @@
     <!-- Camera for QR Scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
     
+    <!-- Overlay Permission for hiding USSD dialogs -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    
     <!-- Required for USSD on some devices -->
     <uses-feature android:name="android.hardware.telephony" android:required="true" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -53,5 +56,10 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        
+        <!-- Overlay Service for hiding USSD dialogs -->
+        <service
+            android:name=".service.UssdOverlayService"
+            android:exported="false" />
     </application>
 </manifest>

@@ -43,6 +43,7 @@ fun MainNavigation(
     hasPhonePermission: Boolean,
     hasCameraPermission: Boolean,
     isAccessibilityEnabled: Boolean,
+    hasOverlayPermission: Boolean = true,
     totalSpent: Double,
     averageTransaction: Double,
     categoryStats: Map<PaymentCategory, Pair<Int, Double>>,
@@ -54,7 +55,8 @@ fun MainNavigation(
     onClearData: () -> Unit,
     onRequestPhonePermissions: () -> Unit,
     onRequestCameraPermission: () -> Unit,
-    onOpenAccessibilitySettings: () -> Unit
+    onOpenAccessibilitySettings: () -> Unit,
+    onRequestOverlayPermission: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -120,6 +122,7 @@ fun MainNavigation(
                     recentTransactions = recentTransactions,
                     lastBalance = lastBalance,
                     hasPhonePermission = hasPhonePermission,
+                    hasOverlayPermission = hasOverlayPermission,
                     isAccessibilityEnabled = isAccessibilityEnabled,
                     onSendMoney = { 
                         pendingRecipient = ""
@@ -144,7 +147,8 @@ fun MainNavigation(
                         }
                     },
                     onRequestPermissions = onRequestPhonePermissions,
-                    onOpenAccessibilitySettings = onOpenAccessibilitySettings
+                    onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                    onRequestOverlayPermission = onRequestOverlayPermission
                 )
             }
             

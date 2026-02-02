@@ -21,11 +21,13 @@ fun HomeScreen(
     lastBalance: Double,
     hasPhonePermission: Boolean,
     isAccessibilityEnabled: Boolean,
+    hasOverlayPermission: Boolean = true,
     onSendMoney: () -> Unit,
     onCheckBalance: () -> Unit,
     onViewHistory: () -> Unit,
     onRequestPermissions: () -> Unit,
-    onOpenAccessibilitySettings: () -> Unit
+    onOpenAccessibilitySettings: () -> Unit,
+    onRequestOverlayPermission: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -33,13 +35,15 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Service Status
-        if (!hasPhonePermission || !isAccessibilityEnabled) {
+        if (!hasPhonePermission || !isAccessibilityEnabled || !hasOverlayPermission) {
             item {
                 ServiceStatusCard(
                     hasPhonePermission = hasPhonePermission,
                     isAccessibilityEnabled = isAccessibilityEnabled,
+                    hasOverlayPermission = hasOverlayPermission,
                     onRequestPermissions = onRequestPermissions,
-                    onOpenAccessibilitySettings = onOpenAccessibilitySettings
+                    onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                    onRequestOverlayPermission = onRequestOverlayPermission
                 )
             }
         }
@@ -150,8 +154,10 @@ fun HomeScreen(
 private fun ServiceStatusCard(
     hasPhonePermission: Boolean,
     isAccessibilityEnabled: Boolean,
+    hasOverlayPermission: Boolean,
     onRequestPermissions: () -> Unit,
-    onOpenAccessibilitySettings: () -> Unit
+    onOpenAccessibilitySettings: () -> Unit,
+    onRequestOverlayPermission: () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -240,6 +246,41 @@ private fun ServiceStatusCard(
                         )
                     ) {
                         Text("Enable")
+                    }
+                }
+            }
+            
+            if (!hasOverlayPermission) {
+                if (!hasPhonePermission || !isAccessibilityEnabled) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Overlay Permission",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = "For seamless USSD experience",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Button(
+                        onClick = onRequestOverlayPermission,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Allow")
                     }
                 }
             }

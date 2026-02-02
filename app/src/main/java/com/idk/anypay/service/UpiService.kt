@@ -63,6 +63,9 @@ class UpiService(private val context: Context) {
             Log.d(TAG, "USSD Response: ${message.take(100)}...")
             _lastUssdMessage.value = message
             _operationState.value = OperationState.InProgress(message)
+            
+            // Update overlay with current message
+            UssdOverlayService.updateMessage(message.take(150))
         }
         
         UssdAccessibilityService.onOperationComplete = { success, message ->
@@ -115,6 +118,9 @@ class UpiService(private val context: Context) {
         pendingTransaction = transaction
         _operationState.value = OperationState.InProgress("Initiating balance check...")
         
+        // Start overlay to hide USSD dialogs
+        UssdOverlayService.start(context, "Initiating balance check...")
+        
         UssdAccessibilityService.startCheckBalance(
             bankIfsc = credentials.bankIfsc,
             bankName = credentials.bankName,
@@ -149,6 +155,9 @@ class UpiService(private val context: Context) {
         
         pendingTransaction = transaction
         _operationState.value = OperationState.InProgress("Initiating payment...")
+        
+        // Start overlay to hide USSD dialogs
+        UssdOverlayService.start(context, "Initiating payment to $recipient...")
         
         UssdAccessibilityService.startSendMoney(
             bankIfsc = credentials.bankIfsc,
@@ -187,6 +196,7 @@ class UpiService(private val context: Context) {
     fun cancelOperation() {
         Log.d(TAG, "Cancelling current operation")
         UssdAccessibilityService.cancelOperation()
+        UssdOverlayService.stop(context)
         _operationState.value = OperationState.Idle
         pendingTransaction = null
     }
@@ -216,6 +226,9 @@ class UpiService(private val context: Context) {
         } else {
             OperationState.Error(message)
         }
+        
+        // Stop the overlay
+        UssdOverlayService.stop(context)
         
         pendingTransaction = null
     }

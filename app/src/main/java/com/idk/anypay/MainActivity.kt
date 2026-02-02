@@ -126,6 +126,7 @@ private fun AppContent(
                 hasPhonePermission = hasPhonePermission,
                 hasCameraPermission = hasCameraPermission,
                 isAccessibilityEnabled = isAccessibilityEnabled,
+                hasOverlayPermission = viewModel.hasOverlayPermission(),
                 totalSpent = totalSpent,
                 averageTransaction = averageTransaction,
                 categoryStats = categoryStats,
@@ -151,6 +152,9 @@ private fun AppContent(
                 onRequestCameraPermission = onRequestCameraPermission,
                 onOpenAccessibilitySettings = {
                     viewModel.openAccessibilitySettings()
+                },
+                onRequestOverlayPermission = {
+                    viewModel.requestOverlayPermission()
                 }
             )
         }
