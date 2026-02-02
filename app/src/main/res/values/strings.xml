@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AnyPay</string>
+    <string name="accessibility_service_label">AnyPay USSD Automation</string>
+    <string name="accessibility_service_description">This service enables automatic navigation of USSD menus for UPI payments via *99#. It reads USSD dialog content and inputs your responses automatically. Your UPI PIN is transmitted securely through USSD and is never stored in plain text.</string>
+</resources>
