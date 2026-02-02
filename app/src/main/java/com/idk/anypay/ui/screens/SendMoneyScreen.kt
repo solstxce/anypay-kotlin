@@ -21,15 +21,25 @@ import com.idk.anypay.ui.theme.*
 fun SendMoneyScreen(
     operationState: UpiService.OperationState,
     lastUssdMessage: String?,
+    initialRecipient: String = "",
+    initialAmount: String = "",
+    initialRemarks: String = "",
     onSendMoney: (String, Double, String) -> Unit,
     onCancel: () -> Unit,
     onScanQr: () -> Unit,
     onBack: () -> Unit,
     onReset: () -> Unit
 ) {
-    var recipient by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var remarks by remember { mutableStateOf("") }
+    var recipient by remember { mutableStateOf(initialRecipient) }
+    var amount by remember { mutableStateOf(initialAmount) }
+    var remarks by remember { mutableStateOf(initialRemarks) }
+    
+    // Update when initial values change (from QR scan)
+    LaunchedEffect(initialRecipient, initialAmount, initialRemarks) {
+        if (initialRecipient.isNotEmpty()) recipient = initialRecipient
+        if (initialAmount.isNotEmpty()) amount = initialAmount
+        if (initialRemarks.isNotEmpty()) remarks = initialRemarks
+    }
     
     // Validation
     val isRecipientValid = UpiPaymentInfo.isValidRecipient(recipient)

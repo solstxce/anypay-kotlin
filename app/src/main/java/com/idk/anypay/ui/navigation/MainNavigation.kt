@@ -174,6 +174,9 @@ fun MainNavigation(
                 SendMoneyScreen(
                     operationState = operationState,
                     lastUssdMessage = lastUssdMessage,
+                    initialRecipient = pendingRecipient,
+                    initialAmount = pendingAmount,
+                    initialRemarks = pendingRemarks,
                     onSendMoney = { recipient, amount, remarks ->
                         if (hasPhonePermission && isAccessibilityEnabled) {
                             onSendMoney(recipient, amount, remarks)
