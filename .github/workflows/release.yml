@@ -1,6 +1,10 @@
 name: Release Signed APK
 
 on:
+  push:
+    branches:
+      - main
+      - master
   release:
     types: [created]
   workflow_dispatch:
@@ -35,7 +39,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleRelease --warning-mode none \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
@@ -48,6 +52,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       
       - name: Upload APK to Release
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
